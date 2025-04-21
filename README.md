@@ -192,6 +192,20 @@ when sometime users forget her username or password then he can use her birthdat
 
 - ![Image](https://github.com/user-attachments/assets/17fc74b0-5ca4-4cae-a231-228879c4e818)
 
+Project Overview
+- Name: Secure Banking Terminal
+- Purpose: Simulate basic banking operations like balance inquiry, deposits, and transaction history.
+- Key Features:- Balance Inquiry: Users can check their current account balance.
+- Deposits: Allow users to add money to their account.
+- Transaction History: Log and display transaction records for transparency.
+- Account Modification: Enables updating the account holder's name.
+- Authentication (Future Addition): Consider adding OTP-based login for security.
+
+![Image](https://github.com/user-attachments/assets/dff7194d-0ef3-47ba-9dcc-b723e8c7e865)
+
+
+
+
 
 
 
