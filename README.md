@@ -183,3 +183,6 @@ while True:
 output:
 ![Image](https://github.com/user-attachments/assets/1f708388-f766-4ea8-8585-7810b5b6c8fd)
 
+when sometime users forget her username or password then he can use her birthdate and email id to enter the main section
+![Image](https://github.com/user-attachments/assets/15948634-6246-4e44-b47b-0fbb496ecdb0)
+
