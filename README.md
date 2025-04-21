@@ -190,6 +190,8 @@ when sometime users forget her username or password then he can use her birthdat
 - Identity Verification: OTP-based authentication for secure user login.
 - Account Modification: Allow users to update personal details like their name.
 
+- ![Image](https://github.com/user-attachments/assets/17fc74b0-5ca4-4cae-a231-228879c4e818)
+
 
 
 
