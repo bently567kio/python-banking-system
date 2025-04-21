@@ -186,3 +186,10 @@ output:
 when sometime users forget her username or password then he can use her birthdate and email id to enter the main section
 ![Image](https://github.com/user-attachments/assets/15948634-6246-4e44-b47b-0fbb496ecdb0)
 
+- Balance Inquiry: Display account balance securely.
+- Identity Verification: OTP-based authentication for secure user login.
+- Account Modification: Allow users to update personal details like their name.
+
+
+
+
