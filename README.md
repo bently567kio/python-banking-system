@@ -1,14 +1,24 @@
+import json
 import random
+import datetime
 from tabulate import tabulate
 
 
 class BankingSystem:
     def __init__(self, bank_name):
         self.bank_name = bank_name
-        self.users = {}
+        self.users = self.load_data()
 
-    def show_header(self):
-        print(f"======== {self.bank_name} ========")
+    def load_data(self):
+        try:
+            with open("bank_data.json", "r") as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return {}  # Return an empty dictionary if no data exists
+
+    def save_data(self):
+        with open("bank_data.json", "w") as file:
+            json.dump(self.users, file, indent=4)
 
     def generate_account_number(self):
         return random.randint(10000000000, 99999999999)
@@ -19,31 +29,36 @@ class BankingSystem:
         if username in self.users:
             print("This username is already taken! Please try another one.")
             return False
+
         try:
             password = int(input("Create a new Password (numeric): "))
+            transaction_pin = int(input("Create a 4-digit Transaction PIN: "))
         except ValueError:
-            print("Invalid password format! Please enter only numeric values.")
+            print("Invalid format! Please enter numeric values.")
             return False
 
         email = input("Enter the email ID: ")
         phone_number = input("Enter the phone number: ")
         dob = input("Enter the date of birth (YYYY-MM-DD): ")
         balance = float(input("Enter the initial deposit amount (€): "))
+
         account_number = self.generate_account_number()
 
         self.users[username] = {
             "password": password,
+            "transaction_pin": transaction_pin,
             "email": email,
             "dob": dob,
             "phone": phone_number,
             "balance": balance,
             "account_number": account_number,
-            "account_holder": username,  # Explicitly storing account holder name
-            "transactions": [("Initial Deposit", balance, balance)]
+            "transactions": [
+                ("Initial Deposit", balance, balance, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         }
 
-        print(f"Your account has been successfully created! Account Number: {account_number}")
-        return True
+        self.save_data()
+        print(f"Your account has been successfully created at {self.bank_name}!")
+        print(f"Account Number: {account_number}")
 
     def login(self):
         print("===== Login =====")
@@ -65,59 +80,30 @@ class BankingSystem:
                     attempts += 1
                     print(f"Invalid credentials, {3 - attempts} attempts left.")
 
-            print("Too many failed attempts. Please authenticate using DOB and Email.")
-
-            dob = input("Enter your Date of Birth (YYYY-MM-DD): ")
-            email = input("Enter your Email ID: ")
-            if self.users[username]["dob"] == dob and self.users[username]["email"] == email:
-                print("Login Successfully using DOB and Email")
-                return username
-            else:
-                print("Invalid credentials, try again.")
-                return None
+            print("Too many failed attempts.")
+            return None
         else:
-            print("Username not found, please check again.")
+            print("Username not found.")
             return None
 
     def show_account_details(self, username):
         print("======= Account Details =======")
+        user = self.users[username]
         data = [
-            ["Account Holder", self.users[username]['account_holder']],
-            ["A/c Number", self.users[username]['account_number']],
-            ["Balance", f"€{self.users[username]['balance']}"]
+            ["Account Holder", username],
+            ["A/c Number", user["account_number"]],
+            ["Balance", f"€{user['balance']}"]
         ]
         print(tabulate(data, headers=["Field", "Value"], tablefmt="grid"))
-
-        edit_option = input("Do you want to edit the account holder's name? (yes/no): ").lower()
-        if edit_option == "yes":
-            phone_number = input("Enter your registered phone number: ")
-            if phone_number == self.users[username]['phone']:
-                otp = random.randint(100000, 999999)
-                print(f"Your OTP is: {otp}")  # In a real system, send via SMS/email
-                try:
-                    user_otp = int(input("Enter the OTP: "))
-                except ValueError:
-                    print("Invalid OTP format.")
-                    return
-
-                if user_otp == otp:
-                    new_name = input("Enter the new account holder name: ")
-                    self.users[username]['account_holder'] = new_name
-                    print("Account holder name updated successfully.")
-                else:
-                    print("Invalid OTP. Edit process aborted.")
-            else:
-                print("Phone number does not match our records.")
-        else:
-            print("No changes made.")
 
     def deposit(self, username):
         amount = float(input("Enter amount to deposit (€): "))
         if amount > 0:
             self.users[username]["balance"] += amount
-            self.users[username]["transactions"].append(("Deposit", amount, self.users[username]["balance"]))
+            self.users[username]["transactions"].append(("Deposit", amount, self.users[username]["balance"],
+                                                         datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            self.save_data()
             print(f"€{amount} deposited successfully!")
-            print(f"New Balance: ₹{self.users[username]['balance']}")
         else:
             print("Invalid deposit amount.")
 
@@ -125,86 +111,82 @@ class BankingSystem:
         amount = float(input("Enter amount to withdraw (€): "))
         if 0 < amount <= self.users[username]["balance"]:
             self.users[username]["balance"] -= amount
-            self.users[username]["transactions"].append(("Withdraw", amount, self.users[username]["balance"]))
+            self.users[username]["transactions"].append(("Withdraw", amount, self.users[username]["balance"],
+                                                         datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            self.save_data()
             print(f"€{amount} withdrawn successfully!")
-            print(f"New Balance: €{self.users[username]['balance']}")
         else:
             print("Invalid withdrawal amount or insufficient funds.")
 
     def show_transaction_history(self, username):
-        print("\n=== Transaction History ===")
-        transactions = self.users[username]["transactions"]
-        transaction_table = [["Type", "Amount", "Balance After"]]
-        transaction_table.extend(transactions)
-        print(tabulate(transaction_table, headers="firstrow", tablefmt="grid"))
+        if username not in self.users:
+            print("User not found!")
+            return
+
+        try:
+            pin = int(input("Enter your 4-digit Transaction PIN: "))
+        except ValueError:
+            print("Invalid PIN format!")
+            return
+
+        if pin == self.users[username]["transaction_pin"]:
+            print("\n=== Transaction History ===")
+            transactions = self.users[username]["transactions"]
+            transaction_table = [["Type", "Amount", "Balance After", "Date & Time"]]
+            transaction_table.extend(transactions)
+            print(tabulate(transaction_table, headers="firstrow", tablefmt="grid"))
+        else:
+            print("Invalid Transaction PIN! Access Denied.")
 
 
 # Running the Banking System
-bank = BankingSystem("Federal Bank")
+bank = BankingSystem("My Custom Bank")
 
 while True:
-    bank.show_header()
-    choice = input("Do you want to create an account? (yes/no): ").lower()
-    if choice == "yes":
-        bank.register_username()
-    else:
-        break
-
-logged_in_users = None
-while not logged_in_users:
-    logged_in_users = bank.login()
-
-while True:
-    bank.show_header()
-    print("1. Show Account Details")
-    print("2. Deposit")
-    print("3. Withdraw")
-    print("4. Transaction History")
-    print("5. Exit")
+    print("\nWelcome to", bank.bank_name)
+    print("1. Register New Account")
+    print("2. Login")
+    print("3. Exit")
 
     try:
         choice = int(input("Enter your choice: "))
         if choice == 1:
-            bank.show_account_details(logged_in_users)
+            bank.register_username()
         elif choice == 2:
-            bank.deposit(logged_in_users)
-        elif choice == 3:
-            bank.withdraw(logged_in_users)
-        elif choice == 4:
-            bank.show_transaction_history(logged_in_users)
-        elif choice == 5:
-            print("Thank you for banking with us!")
-            break
-        else:
-            print("Invalid choice! Please select a valid option.")
+            logged_in_user = bank.login()
+            if logged_in_user:
+                while True:
+                    print("\n1. Show Account Details")
+                    print("2. Deposit")
+                    print("3. Withdraw")
+                    print("4. Transaction History")
+                    print("5. Logout")
+
+                    try:
+                            option = int(input("Enter your choice: "))
+                            if option == 1:
+                                bank.show_account_details(logged_in_user)
+                            elif option == 2:
+                                bank.deposit(logged_in_user)
+                            elif option == 3:
+                                bank.withdraw(logged_in_user)
+                            elif option == 4:
+                                bank.show_transaction_history(logged_in_user)
+                            elif option == 5:
+                                print("Logged out successfully!")
+                                break
+                            else:
+                                print("Invalid choice!")
+                    except ValueError:
+                            print("Enter a valid number!")
+            elif choice == 3:
+                print("Thank you for using", bank.bank_name)
+                break
+            else:
+                print("Invalid choice!")
     except ValueError:
-        print("Invalid input! Please choose a number between 1-5.")
-
-output:
-![Image](https://github.com/user-attachments/assets/1f708388-f766-4ea8-8585-7810b5b6c8fd)
-
-when sometime users forget her username or password then he can use her birthdate and email id to enter the main section
-![Image](https://github.com/user-attachments/assets/15948634-6246-4e44-b47b-0fbb496ecdb0)
-
-- Balance Inquiry: Display account balance securely.
-- Identity Verification: OTP-based authentication for secure user login.
-- Account Modification: Allow users to update personal details like their name.
-
-- ![Image](https://github.com/user-attachments/assets/17fc74b0-5ca4-4cae-a231-228879c4e818)
-
-Project Overview
-- Name: Secure Banking Terminal
-- Purpose: Simulate basic banking operations like balance inquiry, deposits, and transaction history.
-- Key Features:- Balance Inquiry: Users can check their current account balance.
-- Deposits: Allow users to add money to their account.
-- Transaction History: Log and display transaction records for transparency.
-- Account Modification: Enables updating the account holder's name.
-- Authentication (Future Addition): Consider adding OTP-based login for security.
-
-![Image](https://github.com/user-attachments/assets/dff7194d-0ef3-47ba-9dcc-b723e8c7e865)
-
-
-
+            print("Enter a valid number!")
+            
 
 
 
