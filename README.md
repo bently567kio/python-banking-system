@@ -181,5 +181,5 @@ while True:
         print("Invalid input! Please choose a number between 1-5.")
 
 output:
-
+![Image](https://github.com/user-attachments/assets/1f708388-f766-4ea8-8585-7810b5b6c8fd)
 
